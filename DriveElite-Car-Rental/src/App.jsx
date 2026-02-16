@@ -15,8 +15,6 @@ import Header from "./Components/Header";
 import packageData from "./Components/packageData";
 import Footer from "./Components/footer";
 
-// --- DATA: 24 Cars ---
-
 export default function App() {
   const [view, setView] = useState("home");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,7 +63,6 @@ export default function App() {
     if (window.confirm("Are you sure you want to cancel this reservation?")) {
       const updated = bookings.filter((b) => b.bookingId !== bookingId);
       setBookings(updated);
-      // alert("Booking Cancelled.");
     }
   };
 
@@ -75,7 +72,8 @@ export default function App() {
       return;
     }
     if (!bookingDates.pickup || !bookingDates.return) {
-      alert("Please select dates first!");
+      alert("Please select dates first on the Home page!");
+      setView("home");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -96,12 +94,11 @@ export default function App() {
       },
     ]);
     alert("Booking Saved!");
+    setView("bookings");
   };
 
   return (
     <div className="bg-gray-50 text-gray-800 font-sans min-h-screen">
-      {/* Navbar */}
-
       <Header
         view={view}
         setView={setView}
@@ -114,6 +111,7 @@ export default function App() {
       />
 
       <main className="container mx-auto px-4 py-8">
+        {/* --- HOME VIEW (Fleet Only) --- */}
         {view === "home" && (
           <>
             <section className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-gray-900 text-white p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
@@ -139,7 +137,6 @@ export default function App() {
                 <div className="space-y-4">
                   <input
                     type="date"
-                    required
                     value={bookingDates.pickup}
                     onChange={(e) =>
                       setBookingDates({
@@ -147,11 +144,10 @@ export default function App() {
                         pickup: e.target.value,
                       })
                     }
-                    className="w-full p-4 border rounded-xl bg-gray-50  text-black"
+                    className="w-full p-4 border rounded-xl bg-gray-50 text-black font-bold"
                   />
                   <input
                     type="date"
-                    required
                     value={bookingDates.return}
                     onChange={(e) =>
                       setBookingDates({
@@ -159,7 +155,7 @@ export default function App() {
                         return: e.target.value,
                       })
                     }
-                    className="w-full p-4 border rounded-xl bg-gray-50 font-black text-black"
+                    className="w-full p-4 border rounded-xl bg-gray-50 text-black font-bold"
                   />
                   <a
                     href="#fleet"
@@ -170,39 +166,9 @@ export default function App() {
                 </div>
               </div>
             </section>
-            <section id="packages" className="mb-20">
-              <h2 className="text-3xl font-black mb-10 text-center uppercase border-b-4 border-blue-600 inline-block tracking-widest">
-                Tour Packages
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {packageData.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="bg-white rounded-3xl overflow-hidden shadow-lg border hover:border-blue-600 transition"
-                  >
-                    <img
-                      src={pkg.image}
-                      className="h-48 w-full object-cover"
-                      alt={pkg.name}
-                    />
-                    <div className="p-8">
-                      <h3 className="font-black text-xl mb-2">{pkg.name}</h3>
-                      <p className="text-amber-600 font-black text-2xl mb-6">
-                        ₹{pkg.price.toLocaleString("en-IN")}
-                      </p>
-                      <button
-                        onClick={() => handleRentNow(pkg)}
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl active:scale-95 transition font-black uppercase tracking-widest text-xs"
-                      >
-                        Book Package
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+
             <section id="fleet">
-              <h2 className="text-3xl font-black mb-10 text-center uppercase border-b-4 border-amber-500 inline-block tracking-widest">
+              <h2 className="text-3xl font-black mb-10 text-center uppercase border-b-4 border-amber-500 inline-block tracking-widest italic">
                 Premium Fleet
               </h2>
               <div className="flex flex-wrap justify-between items-center mb-10 font-black uppercase text-xs">
@@ -211,7 +177,11 @@ export default function App() {
                     <button
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={`px-6 py-2 rounded-full transition ${category === cat ? "bg-blue-600 text-white shadow-lg" : "bg-white border"}`}
+                      className={`px-6 py-2 rounded-full transition ${
+                        category === cat
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "bg-white border"
+                      }`}
                     >
                       {cat}
                     </button>
@@ -219,7 +189,7 @@ export default function App() {
                 </div>
                 <select
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="p-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-600 font-black"
+                  className="p-2 border rounded-xl bg-white outline-none font-black"
                 >
                   <option value="default">Default Sort</option>
                   <option value="price-asc">Price: Low to High</option>
@@ -261,6 +231,51 @@ export default function App() {
           </>
         )}
 
+        {/* --- SEPARATE PACKAGES VIEW --- */}
+        {view === "packages" && (
+          <section className="py-10">
+            <h2 className="text-3xl font-black mb-12 border-b-8 border-blue-600 inline-block italic uppercase tracking-tighter">
+              Indore Tour Packages
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {packageData.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl border hover:border-blue-600 transition group"
+                >
+                  <div className="h-64 overflow-hidden">
+                    <img
+                      src={pkg.image}
+                      className="h-full w-full object-cover group-hover:scale-110 transition duration-700"
+                      alt={pkg.name}
+                    />
+                  </div>
+                  <div className="p-8">
+                    <h3 className="font-black text-2xl mb-2 italic tracking-tighter">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-gray-500 text-xs font-bold mb-6 uppercase tracking-widest leading-relaxed">
+                      {pkg.details}
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-amber-600 font-black text-3xl">
+                        ₹{pkg.price.toLocaleString("en-IN")}
+                      </p>
+                      <button
+                        onClick={() => handleRentNow(pkg)}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition shadow-lg"
+                      >
+                        Book Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* --- BOOKINGS VIEW --- */}
         {view === "bookings" && (
           <section className="max-w-2xl mx-auto py-10 font-black uppercase tracking-tight text-gray-800">
             <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
@@ -268,13 +283,13 @@ export default function App() {
             </h2>
             {bookings.length === 0 ? (
               <p className="text-gray-400 text-center py-20 italic">
-                No bookings found in local storage.
+                No active bookings found.
               </p>
             ) : (
               bookings.map((b) => (
                 <div
                   key={b.bookingId}
-                  className="bg-white p-8 rounded-[2rem] border-l-[12px] border-blue-600 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 animate-in slide-in-from-left duration-300"
+                  className="bg-white p-8 rounded-[2rem] border-l-[12px] border-blue-600 shadow-xl flex flex-col sm:flex-row justify-between items-center mb-8 gap-4"
                 >
                   <div className="flex-1">
                     <h4 className="text-xl mb-1 tracking-tighter">{b.name}</h4>
@@ -285,16 +300,16 @@ export default function App() {
                       {b.rentalDays} Day(s) • {b.pickup} to {b.return}
                     </p>
                   </div>
-                  <div className="flex gap-3 w-full sm:w-auto">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => setSelectedInvoice(b)}
-                      className="flex-1 sm:flex-none bg-gray-100 p-5 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"
+                      className="bg-gray-100 p-5 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"
                     >
                       <Printer className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => deleteBooking(b.bookingId)}
-                      className="flex-1 sm:flex-none bg-red-50 p-5 rounded-2xl text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm"
+                      className="bg-red-50 p-5 rounded-2xl text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -305,6 +320,7 @@ export default function App() {
           </section>
         )}
 
+        {/* --- CONTACT VIEW --- */}
         {view === "contact" && (
           <section className="max-w-4xl mx-auto py-10 font-black uppercase tracking-tight">
             <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
@@ -330,14 +346,15 @@ export default function App() {
                     <p className="text-lg">+91 8305337***</p>
                   </div>
                 </div>
-
                 <div className="flex items-start gap-6 bg-white p-8 rounded-3xl shadow-sm border">
                   <Mail className="text-blue-600 w-10 h-10 shrink-0" />
                   <div>
                     <p className="text-[10px] text-gray-400 tracking-widest mb-1">
                       Email Address
                     </p>
-                    <p className="text-lg lowercase">driveelite@gmail.com</p>
+                    <p className="text-lg lowercase font-bold tracking-normal">
+                      driveelite@gmail.com
+                    </p>
                   </div>
                 </div>
               </div>
@@ -358,19 +375,19 @@ export default function App() {
                     type="text"
                     required
                     placeholder="FULL NAME"
-                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-black uppercase"
+                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none font-black uppercase"
                   />
                   <input
                     type="email"
                     required
                     placeholder="EMAIL"
-                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-black tracking-normal lowercase"
+                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none font-black tracking-normal lowercase"
                   />
                   <textarea
                     placeholder="MESSAGE"
-                    className="w-full p-4 bg-gray-50 border rounded-xl h-32 outline-none focus:ring-2 focus:ring-blue-600 resize-none font-black uppercase"
+                    className="w-full p-4 bg-gray-50 border rounded-xl h-32 outline-none resize-none font-black uppercase"
                   ></textarea>
-                  <button className="w-full py-5 bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-100 uppercase font-black tracking-widest">
+                  <button className="w-full py-5 bg-blue-700 text-white rounded-2xl shadow-xl uppercase font-black tracking-widest">
                     Send Now
                   </button>
                 </form>
@@ -379,6 +396,7 @@ export default function App() {
           </section>
         )}
 
+        {/* --- PROFILE VIEW --- */}
         {view === "profile" && user && (
           <section className="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl border-t-[12px] border-blue-600 font-black uppercase">
             <h2 className="text-2xl mb-8 flex items-center gap-2 italic text-blue-700  underline">
@@ -400,7 +418,7 @@ export default function App() {
                 <input
                   value={tempName}
                   onChange={(e) => setTempName(e.target.value)}
-                  className="w-full p-5 border rounded-xl focus:ring-2 focus:ring-blue-600 shadow-inner font-black uppercase text-sm"
+                  className="w-full p-5 border rounded-xl shadow-inner font-black uppercase text-sm"
                 />
               </div>
               <button
@@ -417,8 +435,7 @@ export default function App() {
           </section>
         )}
 
-        {/* Footer */}
-        {/* Footer Component Call */}
+        {/* Global Footer */}
         <Footer setView={setView} />
       </main>
 
@@ -462,12 +479,13 @@ export default function App() {
               </button>
             </form>
             <p className="mt-8 text-[9px] text-gray-300 text-center border-t pt-8 italic opacity-50 tracking-widest">
-              Secure Access Portal
+              Authorized Access Portal
             </p>
           </div>
         </div>
       )}
 
+      {/* Invoice Modal */}
       {selectedInvoice && (
         <InvoiceModal
           booking={selectedInvoice}
@@ -502,20 +520,24 @@ function InvoiceModal({ booking, onClose, currentUser }) {
         <div className="p-8">
           <div className="flex justify-between border-b-2 border-gray-100 pb-6 mb-8 text-[10px] tracking-[0.2em]">
             <div>
-              <p className="text-gray-400 mb-2">Billed To:</p>
+              <p className="text-gray-400 mb-2 font-black uppercase">
+                Billed To:
+              </p>
               <p className="font-black text-xl text-gray-800 tracking-tight">
                 {currentUser?.username}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-gray-400 mb-2">Issue Date:</p>
+              <p className="text-gray-400 mb-2 font-black uppercase">
+                Issue Date:
+              </p>
               <p className="font-black text-gray-800 tracking-tight">
                 {new Date().toLocaleDateString("en-IN")}
               </p>
             </div>
           </div>
           <table className="w-full mb-10 text-xs text-left">
-            <thead className="text-[10px] text-gray-400 border-b-2 uppercase tracking-widest italic">
+            <thead className="text-[10px] text-gray-400 border-b-2 uppercase tracking-widest italic font-black">
               <tr>
                 <th className="pb-3">Vehicle Detail</th>
                 <th className="pb-3 text-right">Net Amount</th>
@@ -536,27 +558,27 @@ function InvoiceModal({ booking, onClose, currentUser }) {
               </tr>
             </tbody>
           </table>
-          <div className="border-t-4 border-blue-600 pt-6 space-y-3 text-xs tracking-tighter">
-            <div className="flex justify-between text-gray-400 font-black uppercase tracking-widest">
+          <div className="border-t-4 border-blue-600 pt-6 space-y-3 text-xs tracking-tighter font-black uppercase">
+            <div className="flex justify-between text-gray-400 tracking-widest">
               <span>Fare Subtotal</span>
               <span>₹{base.toLocaleString("en-IN")}</span>
             </div>
-            <div className="flex justify-between text-gray-400 font-black uppercase tracking-widest">
+            <div className="flex justify-between text-gray-400 tracking-widest">
               <span>Taxes (GST 18%)</span>
               <span>₹{gst.toLocaleString("en-IN")}</span>
             </div>
-            <div className="flex justify-between text-3xl font-black text-blue-600 pt-6 border-t-2 border-dashed border-gray-200">
+            <div className="flex justify-between text-3xl font-black text-blue-600 pt-6 border-t-2 border-dashed border-gray-200 tracking-tight italic">
               <span>GRAND TOTAL</span>
               <span>₹{total.toLocaleString("en-IN")}</span>
             </div>
           </div>
           <button
             onClick={() => window.print()}
-            className="w-full mt-10 py-6 bg-gray-900 text-white font-black tracking-[0.3em] rounded-2xl no-print shadow-2xl hover:bg-black active:scale-95 transition text-xs"
+            className="w-full mt-10 py-6 bg-gray-900 text-white font-black tracking-[0.3em] rounded-2xl no-print shadow-2xl hover:bg-black transition text-xs"
           >
             Download PDF Statement
           </button>
-          <p className="mt-10 text-[9px] text-gray-300 text-center uppercase tracking-[0.2em] hidden print:block border-t pt-4 italic">
+          <p className="mt-10 text-[9px] text-gray-300 text-center uppercase tracking-[0.2em] hidden print:block border-t pt-4 italic font-black">
             DriveElite Indore - SVGI Khandwa Road. Thank you for riding with us!
           </p>
         </div>

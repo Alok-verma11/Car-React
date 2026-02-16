@@ -19,6 +19,7 @@ const Header = ({
           onClick={() => {
             setView("home");
             setIsMenuOpen(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }}
           className="text-2xl text-blue-700 italic flex items-center"
         >
@@ -32,17 +33,30 @@ const Header = ({
             className={
               view === "home"
                 ? "text-blue-600"
-                : "text-gray-800 hover:text-blue-500"
+                : "text-gray-800 hover:text-blue-500 transition"
             }
           >
             Home
           </button>
+
+          {/* New Separate Packages Page Button */}
+          <button
+            onClick={() => setView("packages")}
+            className={
+              view === "packages"
+                ? "text-blue-600 underline decoration-4 underline-offset-8"
+                : "text-gray-800 hover:text-blue-500 transition"
+            }
+          >
+            Packages
+          </button>
+
           <button
             onClick={() => setView("contact")}
             className={
               view === "contact"
                 ? "text-blue-600"
-                : "text-gray-800 hover:text-blue-500"
+                : "text-gray-800 hover:text-blue-500 transition"
             }
           >
             Contact
@@ -55,7 +69,7 @@ const Header = ({
                 className={
                   view === "bookings"
                     ? "text-blue-600"
-                    : "text-gray-800 hover:text-blue-500"
+                    : "text-gray-800 hover:text-blue-500 transition"
                 }
               >
                 Bookings ({bookingsCount})
@@ -65,21 +79,23 @@ const Header = ({
                 className={
                   view === "profile"
                     ? "text-blue-600 flex items-center gap-2"
-                    : "text-gray-800 flex items-center gap-2"
+                    : "text-gray-800 flex items-center gap-2 hover:text-blue-500 transition"
                 }
               >
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 border border-blue-200">
-                  {user.username[0].toUpperCase()}
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 border border-blue-200 uppercase">
+                  {user.username[0]}
                 </div>
                 {user.username}
               </button>
               <button
                 onClick={() => {
-                  setUser(null);
-                  localStorage.clear();
-                  setView("home");
+                  if (window.confirm("Are you sure you want to log out?")) {
+                    setUser(null);
+                    localStorage.clear();
+                    setView("home");
+                  }
                 }}
-                className="text-red-500"
+                className="text-red-500 hover:scale-110 transition"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -87,7 +103,7 @@ const Header = ({
           ) : (
             <button
               onClick={() => setAuthModal({ open: true, error: "" })}
-              className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg transition hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg transition hover:bg-blue-700 active:scale-95"
             >
               Sign In
             </button>
@@ -96,16 +112,24 @@ const Header = ({
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden"
+          className="md:hidden text-gray-800"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
-          {isMenuOpen ? <X /> : <Menu />}
+          {isMenuOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <Menu className="w-6 h-6" />
+          )}
         </button>
       </nav>
 
       {/* Mobile Navigation Dropdown */}
       <div
-        className={`md:hidden absolute top-full left-0 w-full bg-white border-t shadow-xl transition-all duration-300 ${isMenuOpen ? "max-h-screen opacity-100 visible" : "max-h-0 opacity-0 invisible"}`}
+        className={`md:hidden absolute top-full left-0 w-full bg-white border-t shadow-xl transition-all duration-300 overflow-hidden ${
+          isMenuOpen
+            ? "max-h-screen opacity-100 visible"
+            : "max-h-0 opacity-0 invisible"
+        }`}
       >
         <div className="p-6 flex flex-col space-y-4 font-bold uppercase text-xs">
           <button
@@ -113,16 +137,31 @@ const Header = ({
               setView("home");
               setIsMenuOpen(false);
             }}
-            className={view === "home" ? "text-blue-600" : ""}
+            className={
+              view === "home" ? "text-blue-600 text-left" : "text-left"
+            }
           >
             Home
+          </button>
+          <button
+            onClick={() => {
+              setView("packages");
+              setIsMenuOpen(false);
+            }}
+            className={
+              view === "packages" ? "text-blue-600 text-left" : "text-left"
+            }
+          >
+            Tour Packages
           </button>
           <button
             onClick={() => {
               setView("contact");
               setIsMenuOpen(false);
             }}
-            className={view === "contact" ? "text-blue-600" : ""}
+            className={
+              view === "contact" ? "text-blue-600 text-left" : "text-left"
+            }
           >
             Contact
           </button>
@@ -133,9 +172,11 @@ const Header = ({
                   setView("bookings");
                   setIsMenuOpen(false);
                 }}
-                className={view === "bookings" ? "text-blue-600" : ""}
+                className={
+                  view === "bookings" ? "text-blue-600 text-left" : "text-left"
+                }
               >
-                My Bookings
+                My Bookings ({bookingsCount})
               </button>
               <button
                 onClick={() => {
@@ -144,9 +185,9 @@ const Header = ({
                   localStorage.clear();
                   setView("home");
                 }}
-                className="text-red-500"
+                className="text-red-500 text-left flex items-center gap-2"
               >
-                Sign Out
+                <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </>
           ) : (
@@ -155,7 +196,7 @@ const Header = ({
                 setAuthModal({ open: true });
                 setIsMenuOpen(false);
               }}
-              className="bg-blue-600 text-white p-3 rounded-xl"
+              className="bg-blue-600 text-white p-4 rounded-xl text-center shadow-md"
             >
               Sign In
             </button>
