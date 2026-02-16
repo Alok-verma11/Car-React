@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Restored: Force black date placeholder text */
+input[type="date"] {
+  color: #000000 !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+}
+
+::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* Professional Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #3b82f6;
+  border-radius: 10px;
+}
+
+/* FIXED: PDF Print Logic */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #invoice-pdf, #invoice-pdf * {
+    visibility: visible !important;
+  }
+
+  #invoice-pdf {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+  }
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
