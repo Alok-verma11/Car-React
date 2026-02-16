@@ -13,7 +13,7 @@ import {
 import carData from "./Components/carData";
 import Header from "./Components/Header";
 import packageData from "./Components/packageData";
-import Footer from "./Components/footer";
+import Footer from "./Components/Footer";
 
 export default function App() {
   const [view, setView] = useState("home");
