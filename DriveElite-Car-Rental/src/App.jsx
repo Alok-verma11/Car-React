@@ -93,7 +93,7 @@ export default function App() {
         ...bookingDates,
       },
     ]);
-    alert("Booking Saved!");
+    // alert("Booking Saved!");
     setView("bookings");
   };
 
