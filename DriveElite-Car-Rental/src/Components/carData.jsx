@@ -3,13 +3,13 @@ import React from 'react'
 const carData = [
   {
     id: 1,
-    name: "Mercedes-Benz C-Class",
+    name: "Maruti Suzuki Baleno",
     image:
-      "https://images.unsplash.com/photo-1686562483617-3cf08d81e117?auto=format&fit=crop&q=80&w=800",
+      "https://tse1.mm.bing.net/th/id/OIP.N45vij1NglwSf9Ki2ttbHQHaE0?rs=1&pid=ImgDetMain&o=7&rm=3",
     price: 6300,
     specs: ["Auto", "4 Seats", "A/C"],
-    category: "luxury",
-    tag: "Popular",
+    category: "budget",
+    tag: "Budget",
   },
   {
     id: 2,
@@ -63,11 +63,11 @@ const carData = [
   },
   {
     id: 7,
-    name: "Ford Mustang GT",
+    name: "Jaguar XF",
     image:
-      "https://images.unsplash.com/photo-1560801877-7bda6dd63e51?auto=format&fit=crop&q=80&w=800",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzWki9Gy3OeSlsqOdn9KUc5lJJM8gye8Gn1g&s",
     price: 8800,
-    specs: ["Manual", "4 Seats", "Sport"],
+    specs: ["Manual", "4 Seats"],
     category: "luxury",
     tag: "Power",
   },
@@ -103,11 +103,11 @@ const carData = [
   },
   {
     id: 11,
-    name: "Ford F-150 Raptor",
+    name: "Tata Sierra",
     image:
-      "https://d3jvxfsgjxj1vz.cloudfront.net/news/wp-content/uploads/2024/02/08153758/Ford-F-150-Raptor.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyDPlpNtjIk3SReyqmBQ2EyvpnLFO8VIjfUQ&s",
     price: 8400,
-    specs: ["Auto", "5 Seats", "Towing"],
+    specs: ["Auto", "6 Seats"],
     category: "suv",
     tag: "Utility",
   },
@@ -193,9 +193,9 @@ const carData = [
   },
   {
     id: 20,
-    name: "Lamborghini Huracán",
+    name: "Tata Punch ",
     image:
-      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800",
+      "https://imgd.aeplcdn.com/664x374/n/cw/ec/172825/punch-facelift-exterior-right-front-three-quarter.png?isig=0&q=80",
     price: 20000,
     specs: ["Auto", "2 Seats", "Exotic"],
     category: "luxury",
@@ -203,7 +203,7 @@ const carData = [
   },
   {
     id: 21,
-    name: "Land Rover Range Rover",
+    name: "Land Rover",
     image:
       "https://www.evoindia.com/evoindia/2020-07/842838bb-5851-44ee-8c27-f67d42dc23d2/Range_Rover.jpg",
     price: 11200,
@@ -240,6 +240,25 @@ const carData = [
     specs: ["Auto", "7 Seats", "A/C"],
     category: "suv",
     tag: "Popular",
+  },
+  {
+    id: 25,
+    name: "Alto",
+    image:
+      "https://akm-img-a-in.tosshub.com/indiatoday/images/story/202212/52294088030_63498fd0c0_k-sixteen_nine.jpg?VersionId=m_k31PKv7_j1vcPeBlFwE3rnAS3bej.L&size=690:388",
+    price: 2600,
+    specs: ["Manual", "4 Seats", "Basic"],
+    category: "budget",
+    tag: "Cheapest",
+  },
+  {
+    id: 26,
+    name: "Duster",
+    image: "https://gaadiwaadi.com/wp-content/uploads/2023/04/Renault-Kwid.jpg",
+    price: 2600,
+    specs: ["Manual", "4 Seats", "Basic"],
+    category: "budget",
+    tag: "Cheapest",
   },
 ];
 
