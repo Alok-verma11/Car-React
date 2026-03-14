@@ -7,7 +7,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Restored: Force black date placeholder text */
 input[type="date"] {
   color: #000000 !important;
   font-weight: 900 !important;
@@ -63,7 +62,24 @@ input[type="date"] {
 }
 
 body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+  color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+}
+
+.font-black {
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

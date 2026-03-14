@@ -29,7 +29,7 @@ const Footer = ({ setView }) => {
           <h4 className="font-black text-[10px] uppercase tracking-[0.3em] mb-8 text-amber-500 underline decoration-blue-600 decoration-4 underline-offset-8">
             Navigation
           </h4>
-          <ul className="space-y-4 text-xs font-black uppercase tracking-widest">
+          <ul className="space-y-4 text-xs font-semibold uppercase tracking-widest">
             <li>
               <button
                 onClick={() => setView("home")}
@@ -72,7 +72,7 @@ const Footer = ({ setView }) => {
           <h4 className="font-black text-[10px] uppercase tracking-[0.3em] mb-8 text-amber-500 underline decoration-blue-600 decoration-4 underline-offset-8">
             Headquarters
           </h4>
-          <div className="space-y-5 text-[11px] font-black uppercase tracking-tight">
+          <div className="space-y-5 text-[11px] font-semibold uppercase tracking-tight">
             <p className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-blue-500 shrink-0" />
               <span className="leading-tight">
@@ -108,7 +108,7 @@ const Footer = ({ setView }) => {
               placeholder="EMAIL@EXAMPLE.COM"
               className="w-full p-4 bg-gray-800 border-none rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <button className="w-full py-4 bg-blue-600 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-xl shadow-xl hover:bg-blue-700 transition active:scale-95">
+            <button className="w-full py-4 bg-blue-600 text-white font-semibold uppercase text-[10px] tracking-[0.2em] rounded-xl shadow-xl hover:bg-blue-700 transition active:scale-95">
               Join Now
             </button>
           </form>
@@ -116,7 +116,7 @@ const Footer = ({ setView }) => {
       </div>
 
       {/* Project Footer Note */}
-      <div className="container mx-auto px-6 mt-10 flex flex-col md:flex-row justify-between items-center text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] gap-6">
+      <div className="container mx-auto px-6 mt-10 flex flex-col md:flex-row justify-between items-center text-[9px] font-semibold text-gray-600 uppercase tracking-[0.3em] gap-6">
         <p>© 2026 DRIVEELITE RENTAL. DESIGNED BY ALOK.</p>
         <div className="flex gap-8 italic">
           <span className="hover:text-blue-500 cursor-pointer transition">

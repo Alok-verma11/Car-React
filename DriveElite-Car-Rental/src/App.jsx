@@ -1,13 +1,25 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useParams,
+  useNavigate,
+} from "react-router-dom";
+import {
   X,
   MapPin,
   Phone,
   Mail,
   Printer,
-  User as UserIcon,
   Save,
   Trash2,
+  CheckCircle,
+  Info,
+  Clock,
+  Map,
+  ArrowLeft,
+  User as UserIcon,
 } from "lucide-react";
 
 import carData from "./Components/carData";
@@ -16,571 +28,728 @@ import packageData from "./Components/packageData";
 import Footer from "./Components/Footer";
 
 export default function App() {
-  const [view, setView] = useState("home");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [category, setCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("default");
+  const [user, setUser] = useState(
+    () => JSON.parse(localStorage.getItem("de_user")) || null,
+  );
+  const [bookings, setBookings] = useState(
+    () => JSON.parse(localStorage.getItem("de_bookings")) || [],
+  );
+  const [bookingDates, setBookingDates] = useState({ pickup: "", return: "" });
+  const [showToast, setShowToast] = useState(null);
+  const [isBooking, setIsBooking] = useState(false);
   const [authModal, setAuthModal] = useState({ open: false, error: "" });
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [bookingDates, setBookingDates] = useState({ pickup: "", return: "" });
-
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("de_user");
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem("de_bookings");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [tempName, setTempName] = useState(user?.username || "");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [driverModal, setDriverModal] = useState({ open: false, item: null });
 
   useEffect(() => {
     localStorage.setItem("de_user", JSON.stringify(user));
     localStorage.setItem("de_bookings", JSON.stringify(bookings));
   }, [user, bookings]);
 
-  const filteredCars = useMemo(() => {
-    let result = [...carData];
-    if (category !== "all")
-      result = result.filter((car) => car.category === category);
-    if (sortBy === "price-asc") result.sort((a, b) => a.price - b.price);
-    if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
-    return result;
-  }, [category, sortBy]);
-
-  const handleAuth = (e) => {
-    e.preventDefault();
-    const email = e.target.email.value;
-    const username = email.split("@")[0];
-    setUser({ email, username });
-    setTempName(username);
-    setAuthModal({ open: false, error: "" });
-  };
-
-  const deleteBooking = (bookingId) => {
-    if (window.confirm("Are you sure you want to cancel this reservation?")) {
-      const updated = bookings.filter((b) => b.bookingId !== bookingId);
-      setBookings(updated);
-    }
-  };
-
-  const handleRentNow = (item) => {
+  const handleRentNow = (item, withDriver = false) => {
     if (!user) {
-      setAuthModal({ open: true, error: "Sign In Required to Book!" });
+      setAuthModal({ open: true, error: "" });
       return;
     }
     if (!bookingDates.pickup || !bookingDates.return) {
       alert("Please select dates first on the Home page!");
-      setView("home");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    const d1 = new Date(bookingDates.pickup);
-    const d2 = new Date(bookingDates.return);
-    const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
-    const bookingId = `DE-${Date.now()}`;
-    const totalRent = item.id >= 100 ? item.price : item.price * diffDays;
 
-    setBookings((prev) => [
-      ...prev,
-      {
+    setIsBooking(true);
+    const driverFeePerDay = 500;
+
+    setTimeout(() => {
+      const d1 = new Date(bookingDates.pickup);
+      const d2 = new Date(bookingDates.return);
+      const diffDays =
+        Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
+
+      let baseRent = item.id >= 100 ? item.price : item.price * diffDays;
+      let totalDriverCost = withDriver ? driverFeePerDay * diffDays : 0;
+
+      const newEntry = {
         ...item,
-        bookingId,
+        bookingId: `DE-${Date.now()}`,
         rentalDays: item.id >= 100 ? "Package" : diffDays,
-        totalRent,
+        withDriver: withDriver,
+        driverCost: totalDriverCost,
+        totalRent: baseRent + totalDriverCost,
         ...bookingDates,
-      },
-    ]);
-    // alert("Booking Saved!");
-    setView("bookings");
+      };
+
+      setBookings([...bookings, newEntry]);
+      setIsBooking(false);
+      setShowToast(`${item.name} Booked!`);
+      setTimeout(() => setShowToast(null), 800);
+    }, 400);
   };
 
   return (
-    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen">
-      <Header
-        view={view}
-        setView={setView}
-        user={user}
-        setUser={setUser}
-        bookingsCount={bookings.length}
-        setAuthModal={setAuthModal}
-        isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-      />
-
-      <main className="container mx-auto px-4 py-8">
-        {/* --- HOME VIEW (Fleet Only) --- */}
-        {view === "home" && (
-          <>
-            <section className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-gray-900 text-white p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-              <div>
-                <h1 className="text-5xl md:text-6xl font-black mb-4 uppercase italic">
-                  Drive the Best
-                </h1>
-                <p className="text-gray-400 mb-8 max-w-xl ">
-                  Indore's #1 Car Rental. Select your dates and calculate the
-                  exact rate for your journey.
-                </p>
-                <a
-                  href="#fleet"
-                  className="bg-amber-500 text-gray-900 px-8 py-4 rounded-2xl font-black uppercase shadow-xl hover:scale-105 transition inline-block"
-                >
-                  Explore Fleet
-                </a>
-              </div>
-              <div className="bg-white p-8 rounded-3xl shadow-2xl text-gray-800">
-                <h2 className="text-2xl font-black mb-6 text-blue-700 italic border-b-2 pb-2 uppercase ">
-                  Choose Dates
-                </h2>
-                <div className="space-y-4">
-                  <input
-                    type="date"
-                    value={bookingDates.pickup}
-                    onChange={(e) =>
-                      setBookingDates({
-                        ...bookingDates,
-                        pickup: e.target.value,
-                      })
-                    }
-                    className="w-full p-4 border rounded-xl bg-gray-50 text-black font-bold"
-                  />
-                  <input
-                    type="date"
-                    value={bookingDates.return}
-                    onChange={(e) =>
-                      setBookingDates({
-                        ...bookingDates,
-                        return: e.target.value,
-                      })
-                    }
-                    className="w-full p-4 border rounded-xl bg-gray-50 text-black font-bold"
-                  />
-                  <a
-                    href="#fleet"
-                    className="w-full py-4 bg-blue-600 text-white font-black uppercase rounded-xl inline-block text-center shadow-lg active:scale-95 transition"
-                  >
-                    Refresh Rates
-                  </a>
-                </div>
-              </div>
-            </section>
-
-            <section id="fleet">
-              <h2 className="text-3xl font-black mb-10 text-center uppercase border-b-4 border-amber-500 inline-block tracking-widest italic">
-                Premium Fleet
-              </h2>
-              <div className="flex flex-wrap justify-between items-center mb-10 font-black uppercase text-xs">
-                <div className="flex flex-wrap gap-2">
-                  {["all", "luxury", "suv", "budget", "electric"].map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setCategory(cat)}
-                      className={`px-6 py-2 rounded-full transition ${
-                        category === cat
-                          ? "bg-blue-600 text-white shadow-lg"
-                          : "bg-white border"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-                <select
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="p-2 border rounded-xl bg-white outline-none font-black"
-                >
-                  <option value="default">Default Sort</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {filteredCars.map((car) => (
-                  <div
-                    key={car.id}
-                    className="bg-white rounded-[2rem] border-2 border-gray-100 p-4 shadow-sm hover:shadow-2xl transition group"
-                  >
-                    <div className="overflow-hidden rounded-2xl h-44 mb-4">
-                      <img
-                        src={car.image}
-                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                        alt={car.name}
-                      />
-                    </div>
-                    <h3 className="font-black text-lg mb-1 truncate">
-                      {car.name}
-                    </h3>
-                    <p className="text-blue-600 font-black text-xl mb-4">
-                      ₹{car.price.toLocaleString("en-IN")}
-                      <span className="text-[10px] text-gray-400 font-black ml-1 uppercase">
-                        /day
-                      </span>
-                    </p>
-                    <button
-                      onClick={() => handleRentNow(car)}
-                      className="w-full py-4 bg-amber-500 text-gray-900 font-black uppercase rounded-2xl shadow-lg active:scale-95 transition tracking-widest text-xs"
-                    >
-                      Rent Now
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
+    <Router>
+      <div className="bg-gray-50 text-gray-800 font-sans min-h-screen relative overflow-x-hidden">
+        {showToast && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-blue-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-2xl animate-bounce italic text-xs uppercase tracking-widest">
+            {showToast}
+          </div>
         )}
 
-        {/* --- SEPARATE PACKAGES VIEW --- */}
-        {view === "packages" && (
-          <section className="py-10">
-            <h2 className="text-3xl font-black mb-12 border-b-8 border-blue-600 inline-block italic uppercase tracking-tighter">
-              Indore Tour Packages
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {packageData.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl border hover:border-blue-600 transition group"
-                >
-                  <div className="h-64 overflow-hidden">
-                    <img
-                      src={pkg.image}
-                      className="h-full w-full object-cover group-hover:scale-110 transition duration-700"
-                      alt={pkg.name}
-                    />
-                  </div>
-                  <div className="p-8">
-                    <h3 className="font-black text-2xl mb-2 italic tracking-tighter">
-                      {pkg.name}
-                    </h3>
-                    <p className="text-gray-500 text-xs font-bold mb-6 uppercase tracking-widest leading-relaxed">
-                      {pkg.details}
-                    </p>
-                    <div className="flex justify-between items-center">
-                      <p className="text-amber-600 font-black text-3xl">
-                        ₹{pkg.price.toLocaleString("en-IN")}
-                      </p>
-                      <button
-                        onClick={() => handleRentNow(pkg)}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition shadow-lg"
-                      >
-                        Book Now
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <Header
+          user={user}
+          setUser={setUser}
+          bookingsCount={bookings.length}
+          setAuthModal={setAuthModal}
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+        />
 
-        {/* --- BOOKINGS VIEW --- */}
-        {view === "bookings" && (
-          <section className="max-w-2xl mx-auto py-10 font-black uppercase tracking-tight text-gray-800">
-            <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
-              Reservations ({bookings.length})
-            </h2>
-            {bookings.length === 0 ? (
-              <p className="text-gray-400 text-center py-20 italic">
-                No active bookings found.
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomeView
+                carData={carData}
+                bookingDates={bookingDates}
+                setBookingDates={setBookingDates}
+                setDriverModal={setDriverModal}
+                isBooking={isBooking}
+              />
+            }
+          />
+          <Route path="/packages" element={<PackagesView />} />
+          <Route
+            path="/tour/:id"
+            element={
+              <TourDetailPage
+                handleRentNow={handleRentNow}
+                isBooking={isBooking}
+              />
+            }
+          />
+          <Route
+            path="/bookings"
+            element={
+              <BookingsView
+                bookings={bookings}
+                setBookings={setBookings}
+                setSelectedInvoice={setSelectedInvoice}
+                setShowToast={setShowToast}
+              />
+            }
+          />
+          <Route
+            path="/contact"
+            element={<ContactView setShowToast={setShowToast} />}
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProfileView
+                user={user}
+                setUser={setUser}
+                setShowToast={setShowToast}
+              />
+            }
+          />
+        </Routes>
+
+        <Footer />
+
+        {driverModal.open && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 relative shadow-2xl text-center border-t-[12px] border-blue-600">
+              <h3 className="text-2xl font-semibold mb-2 italic text-blue-800 tracking-tighter uppercase">
+                Select Option
+              </h3>
+              <p className="text-[10px] text-gray-400 uppercase mb-8 tracking-widest font-black italic border-b pb-4">
+                {driverModal.item?.name}
               </p>
-            ) : (
-              bookings.map((b) => (
-                <div
-                  key={b.bookingId}
-                  className="bg-white p-8 rounded-[2rem] border-l-[12px] border-blue-600 shadow-xl flex flex-col sm:flex-row justify-between items-center mb-8 gap-4"
-                >
-                  <div className="flex-1">
-                    <h4 className="text-xl mb-1 tracking-tighter">{b.name}</h4>
-                    <p className="text-[10px] text-gray-400 tracking-widest">
-                      REF: {b.bookingId}
-                    </p>
-                    <p className="text-xs text-blue-500 mt-2 font-black">
-                      {b.rentalDays} Day(s) • {b.pickup} to {b.return}
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setSelectedInvoice(b)}
-                      className="bg-gray-100 p-5 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"
-                    >
-                      <Printer className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => deleteBooking(b.bookingId)}
-                      className="bg-red-50 p-5 rounded-2xl text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </section>
-        )}
-
-        {/* --- CONTACT VIEW --- */}
-        {view === "contact" && (
-          <section className="max-w-4xl mx-auto py-10 font-black uppercase tracking-tight">
-            <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
-              Get in Touch
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div className="space-y-8">
-                <div className="flex items-start gap-6 bg-white p-8 rounded-3xl shadow-sm border">
-                  <MapPin className="text-blue-600 w-10 h-10 shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 tracking-widest mb-1">
-                      Address
-                    </p>
-                    <p className="text-lg">SVGI, Khandwa Road, Indore 452020</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-6 bg-white p-8 rounded-3xl shadow-sm border">
-                  <Phone className="text-blue-600 w-10 h-10 shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 tracking-widest mb-1">
-                      Direct Line
-                    </p>
-                    <p className="text-lg">+91 8305337***</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-6 bg-white p-8 rounded-3xl shadow-sm border">
-                  <Mail className="text-blue-600 w-10 h-10 shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 tracking-widest mb-1">
-                      Email Address
-                    </p>
-                    <p className="text-lg lowercase font-bold tracking-normal">
-                      driveelite@gmail.com
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl border relative">
-                <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-                <h3 className="text-xl mb-6 italic text-blue-700 underline tracking-tighter">
-                  Send Inquiry
-                </h3>
-                <form
-                  className="space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    alert("Inquiry Sent!");
-                    setView("home");
+              <div className="space-y-4">
+                <button
+                  onClick={() => {
+                    handleRentNow(driverModal.item, false);
+                    setDriverModal({ open: false, item: null });
                   }}
+                  className="w-full py-5 bg-gray-50 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 hover:text-white transition border border-gray-100"
                 >
-                  <input
-                    type="text"
-                    required
-                    placeholder="FULL NAME"
-                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none font-black uppercase"
-                  />
-                  <input
-                    type="email"
-                    required
-                    placeholder="EMAIL"
-                    className="w-full p-4 bg-gray-50 border rounded-xl outline-none font-black tracking-normal lowercase"
-                  />
-                  <textarea
-                    placeholder="MESSAGE"
-                    className="w-full p-4 bg-gray-50 border rounded-xl h-32 outline-none resize-none font-black uppercase"
-                  ></textarea>
-                  <button className="w-full py-5 bg-blue-700 text-white rounded-2xl shadow-xl uppercase font-black tracking-widest">
-                    Send Now
-                  </button>
-                </form>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* --- PROFILE VIEW --- */}
-        {view === "profile" && user && (
-          <section className="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl border-t-[12px] border-blue-600 font-black uppercase">
-            <h2 className="text-2xl mb-8 flex items-center gap-2 italic text-blue-700  underline">
-              Account Profile
-            </h2>
-            <div className="space-y-8 text-[10px] tracking-widest">
-              <div>
-                <p className="text-gray-400 mb-2 font-black uppercase">
-                  Registered Email
-                </p>
-                <p className="p-4 bg-gray-50 border rounded-xl text-gray-400 lowercase font-bold tracking-normal text-xs">
-                  {user?.email}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-400 mb-2 font-black uppercase">
-                  Display Name
-                </p>
-                <input
-                  value={tempName}
-                  onChange={(e) => setTempName(e.target.value)}
-                  className="w-full p-5 border rounded-xl shadow-inner font-black uppercase text-sm"
-                />
+                  Self Drive
+                </button>
+                <button
+                  onClick={() => {
+                    handleRentNow(driverModal.item, true);
+                    setDriverModal({ open: false, item: null });
+                  }}
+                  className="w-full py-5 bg-blue-700 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl"
+                >
+                  With Driver (+₹500/Day)
+                </button>
               </div>
               <button
-                onClick={() => {
-                  setUser({ ...user, username: tempName });
-                  setView("home");
-                  alert("Profile Updated!");
-                }}
-                className="w-full py-5 bg-blue-600 text-white rounded-2xl shadow-xl flex items-center justify-center gap-2 tracking-[0.2em] text-xs hover:bg-blue-700 transition active:scale-95 uppercase font-black"
+                onClick={() => setDriverModal({ open: false, item: null })}
+                className="mt-8 text-[10px] font-black uppercase text-gray-400 tracking-widest"
               >
-                <Save className="w-4 h-4" /> Update Profile
+                Close Window
               </button>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Global Footer */}
-        <Footer setView={setView} />
-      </main>
+        {authModal.open && (
+          <AuthModal
+            setAuthModal={setAuthModal}
+            setUser={setUser}
+            setShowToast={setShowToast}
+          />
+        )}
+        {selectedInvoice && (
+          <InvoiceModal
+            booking={selectedInvoice}
+            onClose={() => setSelectedInvoice(null)}
+            currentUser={user}
+          />
+        )}
+      </div>
+    </Router>
+  );
+}
 
-      {/* Auth Modal */}
-      {authModal.open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-10 relative shadow-2xl  uppercase tracking-widest animate-in zoom-in duration-300">
-            <button
-              onClick={() => setAuthModal({ open: false, error: "" })}
-              className="absolute top-6 right-6 text-gray-300 hover:text-red-500 transition"
+function HomeView({
+  carData,
+  bookingDates,
+  setBookingDates,
+  setDriverModal,
+  isBooking,
+}) {
+  const [category, setCategory] = useState("all");
+  const categories = [
+    { id: "all", name: "All" },
+    { id: "budget", name: "Budget" },
+    { id: "suv", name: "SUV & 4x4" },
+    { id: "luxury", name: "Luxury" },
+    { id: "electric", name: "Electric" },
+  ];
+
+  const filteredCars = useMemo(() => {
+    let result = [...carData];
+    if (category !== "all")
+      result = result.filter((c) => c.category === category);
+    return result;
+  }, [category, carData]);
+
+  return (
+    <main className="container mx-auto px-4 py-8">
+      <section className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-gray-900 text-white p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden uppercase">
+        <div>
+          <h1 className="text-5xl md:text-6xl font-semibold mb-4 italic">
+            Drive Elite
+          </h1>
+          <p className="text-gray-400 mb-8 max-w-xl italic underline decoration-blue-500 underline-offset-4 tracking-tighter">
+            Luxury and Budget Car Rental Indore
+          </p>
+          <a
+            href="#fleet"
+            className="bg-amber-500 text-gray-900 px-8 py-4 rounded-2xl font-semibold shadow-xl hover:scale-105 transition inline-block text-xs italic tracking-widest"
+          >
+            Explore Fleet
+          </a>
+        </div>
+        <div className="bg-white p-8 rounded-3xl shadow-2xl text-gray-800">
+          <h2 className="text-2xl font-semibold mb-6 text-blue-700 italic border-b-2 pb-2 tracking-tighter uppercase">
+            Travel Dates
+          </h2>
+          <div className="space-y-4">
+            <input
+              type="date"
+              value={bookingDates.pickup}
+              onChange={(e) =>
+                setBookingDates({ ...bookingDates, pickup: e.target.value })
+              }
+              className="w-full p-4 border rounded-xl bg-gray-50 text-black uppercase"
+            />
+            <input
+              type="date"
+              value={bookingDates.return}
+              onChange={(e) =>
+                setBookingDates({ ...bookingDates, return: e.target.value })
+              }
+              className="w-full p-4 border rounded-xl bg-gray-50 text-black  uppercase"
+            />
+            <a
+              href="#fleet"
+              className="w-full py-4 bg-blue-600 text-white font-semibold rounded-xl inline-block text-center shadow-lg active:scale-95 transition text-[10px] tracking-[0.2em] italic"
             >
-              <X className="w-8 h-8" />
-            </button>
-            {authModal.error && (
-              <div className="mb-6 p-4 bg-red-50 text-red-600 text-[10px] rounded-xl border-l-4 border-red-500 font-black">
-                {authModal.error}
-              </div>
-            )}
-            <h2 className="text-3xl mb-10 italic text-blue-700 underline tracking-tighter">
-              Sign In
-            </h2>
-            <form onSubmit={handleAuth} className="space-y-4">
-              <input
-                name="email"
-                type="email"
-                required
-                className="w-full p-5 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-600 lowercase tracking-normal font-black"
-                placeholder="email@example.com"
-              />
-              <input
-                type="password"
-                required
-                className="w-full p-5 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-600 font-black"
-                placeholder="PASSWORD"
-              />
-              <button
-                type="submit"
-                className="w-full py-6 bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-100 tracking-[0.2em] hover:bg-blue-800 transition active:scale-95 text-xs"
-              >
-                Sign In
-              </button>
-            </form>
-            <p className="mt-8 text-[9px] text-gray-300 text-center border-t pt-8 italic opacity-50 tracking-widest">
-              Authorized Access Portal
-            </p>
+              Refresh Rates
+            </a>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Invoice Modal */}
-      {selectedInvoice && (
-        <InvoiceModal
-          booking={selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-          currentUser={user}
-        />
-      )}
+      {/* --- FIXED: Horizontal Scrollable Filters for Mobile --- */}
+      <div id="fleet" className="w-full mb-12 px-2">
+        <div className="flex lg:justify-center items-center gap-3 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setCategory(cat.id)}
+              className={`whitespace-nowrap px-8 py-3 rounded-2xl font-semibold text-[10px] uppercase tracking-widest transition-all shrink-0 ${
+                category === cat.id
+                  ? "bg-blue-600 text-white shadow-xl scale-105 border-blue-600"
+                  : "bg-white text-gray-400 border border-gray-100 hover:bg-gray-50"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-20">
+        {filteredCars.map((car) => (
+          <div
+            key={car.id}
+            className="bg-white rounded-[2rem] border-2 border-gray-100 p-4 shadow-sm hover:shadow-2xl transition group flex flex-col"
+          >
+            <div className="overflow-hidden rounded-2xl h-44 mb-4">
+              <img
+                src={car.image}
+                className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                alt={car.name}
+              />
+            </div>
+            <h3 className="font-bold text-lg mb-1 truncate uppercase tracking-tighter">
+              {car.name}
+            </h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {car.specs.map((spec, i) => (
+                <span
+                  key={i}
+                  className="text-[8px] bg-gray-100 px-2 py-1 rounded-md font-bold text-gray-500 uppercase"
+                >
+                  {spec}
+                </span>
+              ))}
+            </div>
+            <p className="text-blue-600 font-semibold text-xl mb-4 ">
+              ₹{car.price.toLocaleString("en-IN")}{" "}
+              <span className="text-[10px] text-gray-400 font-semibold ml-1 uppercase">
+                /day
+              </span>
+            </p>
+            <button
+              onClick={() => setDriverModal({ open: true, item: car })}
+              disabled={isBooking}
+              className="mt-auto w-full py-4 rounded-2xl font-semibold shadow-lg bg-amber-500 text-gray-900 transition uppercase text-[10px] tracking-widest "
+            >
+              Rent Now
+            </button>
+          </div>
+        ))}
+      </section>
+    </main>
+  );
+}
+
+function TourDetailPage({ handleRentNow, isBooking }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const pkg = packageData.find((p) => p.id === parseInt(id));
+  if (!pkg)
+    return (
+      <div className="text-center py-40 font-semibold uppercase italic">
+        Tour Not Found!
+      </div>
+    );
+  const getEmbedUrl = (url) => {
+    if (!url) return null;
+    const videoId = url.split("/").pop().split("?")[0].replace("watch?v=", "");
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1`;
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-12 animate-in fade-in duration-500">
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-8 flex items-center gap-2 font-semibold text-[10px] text-blue-600 uppercase tracking-widest"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Packages
+      </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-[3rem] shadow-2xl overflow-hidden border">
+        <div className="h-[450px] lg:h-auto overflow-hidden relative bg-black flex items-center justify-center">
+          {pkg.video ? (
+            <>
+              <iframe
+                src={getEmbedUrl(pkg.video)}
+                title={pkg.name}
+                className="absolute inset-0 w-full h-full scale-[1.15] pointer-events-none"
+                allow="autoplay; encrypted-media"
+                style={{ border: "none" }}
+              />
+              <div className="absolute inset-0 z-10 bg-transparent"></div>
+            </>
+          ) : (
+            <img
+              src={pkg.image}
+              className="w-full h-full object-cover"
+              alt={pkg.name}
+            />
+          )}
+        </div>
+        <div className="p-12">
+          <h1 className="text-4xl font-semibold italic text-blue-800 underline decoration-amber-500 underline-offset-8 mb-8 tracking-tighter uppercase">
+            {pkg.name}
+          </h1>
+          <div className="space-y-6 mb-10">
+            <p className="text-sm font-bold text-gray-700 leading-relaxed italic">
+              {pkg.details}
+            </p>
+            <div className="bg-blue-50 p-6 rounded-2xl border-l-8 border-blue-600 font-semibold text-[10px] text-gray-600 uppercase italic tracking-tighter">
+              •Professional Driver Included
+              <br /> • Fuel Included
+              <br /> • Doorstep Pick Up & Drop
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-8 border-t-2 border-dashed">
+            <h2 className="text-3xl font-semibold text-amber-600 ">
+              ₹{pkg.price.toLocaleString("en-IN")}
+            </h2>
+            <button
+              onClick={() => handleRentNow(pkg, true)}
+              disabled={isBooking}
+              className="bg-blue-700 text-white px-10 py-5 rounded-2xl font-semibold text-xs shadow-xl active:scale-95 transition uppercase tracking-widest italic"
+            >
+              {isBooking ? "Wait..." : "Confirm Now"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// --- Invoice Component ---
-function InvoiceModal({ booking, onClose, currentUser }) {
-  const base = booking.totalRent;
-  const gst = base * 0.18;
-  const total = base + gst;
+function PackagesView() {
+  const navigate = useNavigate();
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md no-print">
+    <section className="container mx-auto px-4 py-12 pb-20">
+      <h2 className="text-3xl font-semibold mb-12 border-b-8 border-blue-600 inline-block italic tracking-tighter uppercase">
+        Tour Packages
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {packageData.map((pkg) => (
+          <div
+            key={pkg.id}
+            className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl border hover:border-blue-600 transition group flex flex-col"
+          >
+            <div className="h-64 overflow-hidden relative">
+              <img
+                src={pkg.image}
+                className="h-full w-full object-cover group-hover:scale-110 transition duration-700"
+                alt={pkg.name}
+              />
+              <button
+                onClick={() => navigate(`/tour/${pkg.id}`)}
+                className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl text-[10px] font-semibold shadow-lg hover:bg-blue-600 hover:text-white transition flex items-center gap-2 italic uppercase"
+              >
+                <Info className="w-3 h-3" /> Details
+              </button>
+            </div>
+            <div className="p-8 flex-1 flex flex-col items-start">
+              <h3 className="font-semibold text-2xl mb-4  tracking-tighter uppercase">
+                {pkg.name}
+              </h3>
+              <p className="text-amber-600 font-semibold text-3xl mb-6 ">
+                ₹{pkg.price.toLocaleString("en-IN")}
+              </p>
+              <button
+                onClick={() => navigate(`/tour/${pkg.id}`)}
+                className="mt-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-[10px] tracking-widest hover:bg-blue-700 transition w-full uppercase "
+              >
+                Select Package
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+function BookingsView({
+  bookings,
+  setBookings,
+  setSelectedInvoice,
+  setShowToast,
+}) {
+  const deleteBooking = (id) => {
+    if (window.confirm("Cancel?")) {
+      setBookings(bookings.filter((b) => b.bookingId !== id));
+      setShowToast("Cancelled!");
+      setTimeout(() => setShowToast(null), 1000);
+    }
+  };
+  return (
+    <section className="max-w-2xl mx-auto py-20 font-semibold px-4 min-h-[60vh] uppercase">
+      <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
+        My Bookings ({bookings.length})
+      </h2>
+      {bookings.map((b) => (
+        <div
+          key={b.bookingId}
+          className="bg-white p-8 rounded-[2rem] border-l-[12px] border-blue-600 shadow-xl flex justify-between items-center mb-8 gap-4 animate-in slide-in-from-left duration-300"
+        >
+          <div className="flex-1">
+            <h4 className="text-xl mb-1 ">{b.name}</h4>
+            <p className="text-[10px] text-gray-400 tracking-widest font-semibold italic">
+              REF: {b.bookingId}
+            </p>
+            <p className="text-[10px] text-blue-600 font-bold mt-1 tracking-widest italic">
+              {b.withDriver ? "Driver Included" : "Self Drive"}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setSelectedInvoice(b)}
+              className="bg-gray-100 p-5 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"
+            >
+              <Printer className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => deleteBooking(b.bookingId)}
+              className="bg-red-50 p-5 rounded-2xl text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+function ContactView({ setShowToast }) {
+  const navigate = useNavigate();
+  return (
+    <section className="max-w-4xl mx-auto py-20 font-semibold px-4 uppercase">
+      <h2 className="text-3xl mb-12 border-b-8 border-blue-600 inline-block italic">
+        Contact Us
+      </h2>
+      <form
+        className="bg-white p-10 rounded-[2.5rem] shadow-2xl border"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setShowToast("Inquiry Sent!");
+          navigate("/");
+        }}
+      >
+        <input
+          type="text"
+          required
+          placeholder="NAME"
+          className="w-full p-4 bg-gray-50 border rounded-xl mb-4 font-semibold"
+        />
+        <input
+          type="email"
+          required
+          placeholder="EMAIL"
+          className="w-full p-4 bg-gray-50 border rounded-xl mb-4 font-semibold"
+        />
+        <textarea
+          placeholder="MESSAGE"
+          className="w-full p-4 bg-gray-50 border rounded-xl h-32 mb-4 font-semibold"
+        ></textarea>
+        <button className="w-full py-5 bg-blue-700 text-white rounded-2xl uppercase font-semibold transition active:scale-95 tracking-widest ">
+          Send Now
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function ProfileView({ user, setUser, setShowToast }) {
+  const [name, setName] = useState(user?.username || "");
+  const navigate = useNavigate();
+  if (!user)
+    return (
+      <div className="text-center py-40 font-semibold italic text-red-500 underline decoration-red-200 uppercase">
+        Session Required!
+      </div>
+    );
+
+  return (
+    <section className="max-w-md mx-auto py-20 px-4 text-center uppercase">
+      <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl border-t-[12px] border-blue-600 font-semibold">
+        <h2 className="text-2xl mb-8 italic text-blue-700 underline decoration-amber-500 tracking-tighter">
+          User Account
+        </h2>
+        <div className="space-y-6 text-left">
+          <div>
+            <p className="text-gray-400 mb-2 text-[10px] tracking-widest uppercase italic">
+              Logged In Email
+            </p>
+            <p className="p-5 bg-gray-50 border rounded-xl font-bold lowercase italic text-gray-500 tracking-normal">
+              {user.email}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-400 mb-2 text-[10px] tracking-widest uppercase italic">
+              Display Name
+            </p>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-5 border rounded-xl font-bold  tracking-tighter focus:ring-2 focus:ring-blue-600 outline-none uppercase"
+              placeholder="YOUR NAME"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setUser({ ...user, username: name });
+              setShowToast("Profile Updated!");
+              setTimeout(() => setShowToast(null), 800);
+              navigate("/");
+            }}
+            className="w-full py-5 bg-blue-600 text-white rounded-2xl flex justify-center items-center gap-3 shadow-xl hover:bg-black transition italic tracking-widest"
+          >
+            <Save className="w-4 h-4" /> Update Profile
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AuthModal({ setAuthModal, setUser, setShowToast }) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const handleAuth = (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const name = isSignUp ? e.target.name.value : email.split("@")[0];
+    setUser({ email, username: name });
+    setAuthModal({ open: false, error: "" });
+    setShowToast(isSignUp ? "Account Created!" : `Welcome!`);
+    setTimeout(() => setShowToast(null), 800);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md uppercase tracking-widest">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] p-10 relative shadow-2xl animate-in zoom-in duration-300 border-t-8 border-amber-500">
+        <button
+          onClick={() => setAuthModal({ open: false, error: "" })}
+          className="absolute top-6 right-6 text-gray-300 hover:text-red-500 transition"
+        >
+          <X className="w-8 h-8" />
+        </button>
+        <h2 className="text-3xl mb-10 italic text-blue-700 underline decoration-amber-500 tracking-tighter">
+          {isSignUp ? "Create Account" : "Sign In"}
+        </h2>
+        <form onSubmit={handleAuth} className="space-y-4">
+          {isSignUp && (
+            <input
+              name="name"
+              type="text"
+              required
+              className="w-full p-5 border rounded-xl bg-gray-50 font-semibold italic uppercase tracking-tighter"
+              placeholder="FULL NAME"
+            />
+          )}
+          <input
+            name="email"
+            type="email"
+            required
+            className="w-full p-5 border rounded-xl bg-gray-50 font-semibold italic lowercase tracking-normal"
+            placeholder="EMAIL@EXAMPLE.COM"
+          />
+          <input
+            name="password"
+            type="password"
+            required
+            className="w-full p-5 border rounded-xl bg-gray-50 font-semibold tracking-tighter italic"
+            placeholder="PASSWORD"
+          />
+          <button
+            type="submit"
+            className="w-full py-6 bg-blue-700 text-white rounded-2xl shadow-xl font-semibold transition  uppercase tracking-[0.3em]"
+          >
+            {isSignUp ? "Sign Up" : "Login"}
+          </button>
+        </form>
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-[10px] font-black text-gray-400 hover:text-blue-600 transition tracking-widest"
+          >
+            {isSignUp
+              ? "ALREADY HAVE AN ACCOUNT? LOGIN"
+              : "NEW HERE? CREATE AN ACCOUNT"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceModal({ booking, onClose, currentUser }) {
+  const base = booking.totalRent - (booking.driverCost || 0);
+  const driverCost = booking.driverCost || 0;
+  const gst = booking.totalRent * 0.18;
+  const total = booking.totalRent + gst;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md no-print uppercase">
       <div
         id="invoice-pdf"
-        className="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl font-black uppercase tracking-tighter border"
+        className="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl font-semibold border animate-in slide-in-from-top-10 duration-300"
       >
         <div className="bg-blue-600 p-8 text-white flex justify-between items-center print:text-blue-600 print:bg-white print:border-b-4 print:border-blue-600">
           <div>
-            <h2 className="text-2xl font-black italic">DRIVEELITE</h2>
-            <p className="text-[10px] opacity-80 font-black tracking-widest">
-              Official Rental Statement
+            <h2 className="text-2xl font-semibold italic tracking-tighter">
+              DRIVE ELITE
+            </h2>
+            <p className="text-[10px] opacity-80 font-semibold tracking-widest italic">
+              INVOICE STATEMENT
             </p>
           </div>
           <X className="cursor-pointer no-print" onClick={onClose} />
         </div>
         <div className="p-8">
-          <div className="flex justify-between border-b-2 border-gray-100 pb-6 mb-8 text-[10px] tracking-[0.2em]">
+          <div className="flex justify-between border-b-2 border-gray-100 pb-6 mb-8 text-[10px] tracking-[0.2em] italic">
             <div>
-              <p className="text-gray-400 mb-2 font-black uppercase">
-                Billed To:
-              </p>
-              <p className="font-black text-xl text-gray-800 tracking-tight">
+              <p className="text-gray-400 mb-1">Client</p>
+              <p className="font-black text-xl text-gray-800 tracking-tighter italic underline decoration-blue-100">
                 {currentUser?.username}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-gray-400 mb-2 font-black uppercase">
-                Issue Date:
-              </p>
-              <p className="font-black text-gray-800 tracking-tight">
+              <p className="text-gray-400 mb-1">Issued</p>
+              <p className="font-black text-gray-800 italic">
                 {new Date().toLocaleDateString("en-IN")}
               </p>
             </div>
           </div>
-          <table className="w-full mb-10 text-xs text-left">
-            <thead className="text-[10px] text-gray-400 border-b-2 uppercase tracking-widest italic font-black">
-              <tr>
-                <th className="pb-3">Vehicle Detail</th>
-                <th className="pb-3 text-right">Net Amount</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-700 font-bold uppercase tracking-tighter">
-              <tr>
-                <td className="py-6">
-                  {booking.name}{" "}
-                  <span className="block text-[8px] text-blue-500 mt-1 font-black">
-                    {booking.rentalDays} Day(s) ({booking.pickup} to{" "}
-                    {booking.return})
-                  </span>
-                </td>
-                <td className="py-6 text-right font-black">
-                  ₹{base.toLocaleString("en-IN")}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="border-t-4 border-blue-600 pt-6 space-y-3 text-xs tracking-tighter font-black uppercase">
-            <div className="flex justify-between text-gray-400 tracking-widest">
-              <span>Fare Subtotal</span>
+          <div className="border-t-4 border-blue-600 pt-6 space-y-4 text-[10px] font-semibold italic tracking-tighter">
+            <div className="flex justify-between text-gray-700">
+              <span>Vehicle: {booking.name}</span>
               <span>₹{base.toLocaleString("en-IN")}</span>
             </div>
-            <div className="flex justify-between text-gray-400 tracking-widest">
-              <span>Taxes (GST 18%)</span>
+            <div className="flex justify-between text-blue-600 border-b pb-2">
+              <span>
+                Chauffeur {booking.withDriver ? "(Active)" : "(Self)"}
+              </span>
+              <span>₹{driverCost.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <span>GST (18%)</span>
               <span>₹{gst.toLocaleString("en-IN")}</span>
             </div>
-            <div className="flex justify-between text-3xl font-black text-blue-600 pt-6 border-t-2 border-dashed border-gray-200 tracking-tight italic">
+            <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-6 border-t-2 border-dashed tracking-tighter italic">
               <span>GRAND TOTAL</span>
               <span>₹{total.toLocaleString("en-IN")}</span>
             </div>
           </div>
           <button
             onClick={() => window.print()}
-            className="w-full mt-10 py-6 bg-gray-900 text-white font-black tracking-[0.3em] rounded-2xl no-print shadow-2xl hover:bg-black transition text-xs"
+            className="w-full mt-10 py-6 bg-gray-900 text-white font-semibold tracking-[0.3em] rounded-2xl no-print shadow-2xl hover:bg-black transition text-xs italic"
           >
-            Download PDF Statement
+            Print PDF
           </button>
-          <p className="mt-10 text-[9px] text-gray-300 text-center uppercase tracking-[0.2em] hidden print:block border-t pt-4 italic font-black">
-            DriveElite Indore - SVGI Khandwa Road. Thank you for riding with us!
-          </p>
         </div>
       </div>
     </div>

@@ -1,5 +1,3 @@
-import React from 'react'
-
 const carData = [
   {
     id: 1,
@@ -25,7 +23,7 @@ const carData = [
     id: 3,
     name: "Toyota Fortuner",
     image:
-      "https://media.istockphoto.com/id/1047980380/photo/toyota-fortuner-in-desert.webp?s=1024x1024&w=is&k=20&c=YtEVCUWEZEtuaJeAnrJgWYX9oDoO0cxhaXfjZFaMt08=",
+      "https://upload.wikimedia.org/wikipedia/commons/6/66/2015_Toyota_Fortuner_%28New_Zealand%29.jpg",
     price: 7600,
     specs: ["Auto", "7 Seats", "4x4"],
     category: "suv",
@@ -33,9 +31,8 @@ const carData = [
   },
   {
     id: 4,
-    name: "Porsche 911 Convertible",
-    image:
-      "https://images.unsplash.com/photo-1709791195523-4e9382c2dc6b?auto=format&fit=crop&q=80&w=800",
+    name: "Porsche 911 Carrera Cabriolet",
+    image: "https://cdn1.smartprix.com/rx-iooqCab6R-w1200-h1200/ooqCab6R.webp",
     price: 9600,
     specs: ["Auto", "2 Seats", "Premium"],
     category: "luxury",
