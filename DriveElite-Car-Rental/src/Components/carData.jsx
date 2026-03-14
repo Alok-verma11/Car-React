@@ -3,7 +3,7 @@ const carData = [
     id: 1,
     name: "Maruti Suzuki Baleno",
     image:
-      "https://tse1.mm.bing.net/th/id/OIP.N45vij1NglwSf9Ki2ttbHQHaE0?rs=1&pid=ImgDetMain&o=7&rm=3",
+      "https://www.bluelineexpresscargo.in/maruti-suzuki-baleno-new-model-launched-price/",
     price: 6300,
     specs: ["Auto", "4 Seats", "A/C"],
     category: "budget",
