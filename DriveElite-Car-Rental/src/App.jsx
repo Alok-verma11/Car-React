@@ -535,7 +535,7 @@ function DocumentUploadView({ triggerToast, user, fetchBookings }) {
   // Pehle check karein ki files hain ya nahi
   const startPaymentProcess = () => {
     if (!files.aadhar || !files.license)
-      return alert("Bhai, pehle Aadhar aur License toh upload karo!");
+      return alert("First upload your Aadhar and License!");
     setShowPayment(true);
   };
 
