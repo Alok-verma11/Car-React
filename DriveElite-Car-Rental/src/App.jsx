@@ -212,6 +212,7 @@ export default function App() {
 }
 
 // --- HomeView ---
+// --- HomeView (Updated with Date Validation) ---
 function HomeView({
   carData,
   bookingDates,
@@ -221,6 +222,10 @@ function HomeView({
   setAuthModal,
 }) {
   const [category, setCategory] = useState("all");
+  
+  // Aaj ki date nikalne ke liye (YYYY-MM-DD format mein)
+  const today = new Date().toISOString().split("T")[0];
+
   const filteredCars = useMemo(
     () =>
       category === "all"
@@ -255,59 +260,55 @@ function HomeView({
             Travel Dates
           </h2>
           <div className="space-y-4">
-            <input
-              type="date"
-              value={bookingDates.pickup}
-              onChange={(e) =>
-                setBookingDates({ ...bookingDates, pickup: e.target.value })
-              }
-              className="w-full p-4 border rounded-xl bg-gray-50 text-black uppercase font-black"
-            />
-            <input
-              type="date"
-              value={bookingDates.return}
-              onChange={(e) =>
-                setBookingDates({ ...bookingDates, return: e.target.value })
-              }
-              className="w-full p-4 border rounded-xl bg-gray-50 text-black uppercase font-black"
-            />
+            <div className="flex flex-col">
+              <label className="text-[10px] text-gray-400 mb-1 ml-2">PICKUP DATE</label>
+              <input
+                type="date"
+                min={today} // Aaj se pehle ki date block
+                value={bookingDates.pickup}
+                onChange={(e) =>
+                  setBookingDates({ 
+                    ...bookingDates, 
+                    pickup: e.target.value,
+                    return: e.target.value > bookingDates.return ? e.target.value : bookingDates.return 
+                  })
+                }
+                className="w-full p-4 border rounded-xl bg-gray-50 text-black uppercase font-black"
+              />
+            </div>
+            
+            <div className="flex flex-col">
+              <label className="text-[10px] text-gray-400 mb-1 ml-2">RETURN DATE</label>
+              <input
+                type="date"
+                min={bookingDates.pickup || today} // Pickup se pehle ki date block
+                value={bookingDates.return}
+                onChange={(e) =>
+                  setBookingDates({ ...bookingDates, return: e.target.value })
+                }
+                className="w-full p-4 border rounded-xl bg-gray-50 text-black uppercase font-black"
+              />
+            </div>
           </div>
         </div>
       </section>
-
-      <div
-        id="fleet"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-20"
-      >
+      
+      {/* ... baaki fleet wala code same rahega ... */}
+      <div id="fleet" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-20">
         {filteredCars.map((car) => (
-          <div
-            key={car.id}
-            className="bg-white rounded-[2rem] border-2 border-gray-100 p-4 shadow-sm hover:shadow-2xl transition flex flex-col font-semibold uppercase"
-          >
-            <div className="overflow-hidden rounded-2xl h-44 mb-4">
-              <img
-                src={car.image}
-                className="w-full h-full object-cover"
-                alt={car.name}
-              />
-            </div>
-            <h3 className="font-bold text-lg mb-1 truncate tracking-tighter">
-              {car.name}
-            </h3>
-            <p className="text-blue-600 text-xl mb-4 italic">
-              ₹{car.price.toLocaleString("en-IN")}{" "}
-              <span className="text-[10px] text-gray-400">/day</span>
-            </p>
-            <button
-              onClick={() =>
-                !user
-                  ? setAuthModal({ open: true })
-                  : setDriverModal({ open: true, item: car })
-              }
-              className="mt-auto w-full py-4 rounded-2xl bg-amber-500 text-gray-900 text-[10px] tracking-widest italic font-semibold shadow-lg"
-            >
-              Rent Now
-            </button>
+          <div key={car.id} className="bg-white rounded-[2rem] border-2 border-gray-100 p-4 shadow-sm hover:shadow-2xl transition flex flex-col font-semibold uppercase">
+             {/* ... rest of the car card ... */}
+             <div className="overflow-hidden rounded-2xl h-44 mb-4">
+               <img src={car.image} className="w-full h-full object-cover" alt={car.name} />
+             </div>
+             <h3 className="font-bold text-lg mb-1 truncate tracking-tighter">{car.name}</h3>
+             <p className="text-blue-600 text-xl mb-4 italic">₹{car.price.toLocaleString("en-IN")} <span className="text-[10px] text-gray-400">/day</span></p>
+             <button
+               onClick={() => !user ? setAuthModal({ open: true }) : setDriverModal({ open: true, item: car })}
+               className="mt-auto w-full py-4 rounded-2xl bg-amber-500 text-gray-900 text-[10px] tracking-widest italic font-semibold shadow-lg"
+             >
+               Rent Now
+             </button>
           </div>
         ))}
       </div>
