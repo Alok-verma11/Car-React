@@ -773,46 +773,76 @@ function DriverSelectionModal({ item, onClose, bookingDates }) {
 
 function AuthModal({ setAuthModal, setUser, triggerToast, fetchBookings }) {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state add ki hai
+
   const handleAuth = async (e) => {
     e.preventDefault();
+    setLoading(true); // Button ko disable karne ke liye
+
     const email = e.target.email.value;
     const password = e.target.password.value;
     const name = isSignUp ? e.target.name.value : "";
 
     try {
-      // Agar koi session active hai, toh naya session banane se pehle use delete karna hoga
+      // 1. Purana session saaf karein (Handle error silently)
       try {
         await account.deleteSession("current");
-      } catch (err) {
-        // No active session, safe to proceed
+      } catch (sErr) {
+        // No session to delete, ignore
       }
 
+      // 2. Agar Register kar raha hai
       if (isSignUp) {
         await account.create(ID.unique(), email, password, name);
+        // Chota sa delay taaki Appwrite backend update ho jaye
+        await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
+      // 3. Login Process
       await account.createEmailPasswordSession(email, password);
+
+      // 4. User data fetch karein
       const res = await account.get();
-      setUser({ email: res.email, username: res.name, id: res.$id });
+
+      const userData = {
+        email: res.email,
+        username: res.name,
+        id: res.$id,
+      };
+
+      // State aur LocalStorage update karein (Consistency ke liye)
+      setUser(userData);
+      localStorage.setItem("de_user", JSON.stringify(userData));
+
       fetchBookings(res.$id);
       setAuthModal({ open: false });
       triggerToast(isSignUp ? "Account Created!" : "Welcome Back!");
     } catch (err) {
-      err.message;
+      console.error("Auth Error:", err.message);
+      // Agar error aaye toh alert dikhayein taaki pata chale kya galat hai
+      alert(
+        err.message === "Invalid credentials"
+          ? "Ghalat Email ya Password hai!"
+          : err.message,
+      );
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <div className="fixed inset-0 z-[300] bg-black/80 flex items-center justify-center p-4 italic font-black uppercase">
-      <div className="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-3xl text-center border-t-[12px] border-blue-600">
+      <div className="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-3xl text-center border-t-[12px] border-blue-600 animate-in zoom-in duration-200">
         <h2 className="text-4xl mb-10 text-blue-800 italic underline">
           {isSignUp ? "Register" : "Sign In"}
         </h2>
+
         <form onSubmit={handleAuth} className="space-y-6">
           {isSignUp && (
             <input
               name="name"
               placeholder="FULL NAME"
-              className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px]"
+              className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] outline-none focus:ring-2 focus:ring-blue-600"
               required
             />
           )}
@@ -820,25 +850,37 @@ function AuthModal({ setAuthModal, setUser, triggerToast, fetchBookings }) {
             name="email"
             type="email"
             placeholder="MAIL@DOMAIN.COM"
-            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px]"
+            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] outline-none focus:ring-2 focus:ring-blue-600"
             required
           />
           <input
             name="password"
             type="password"
             placeholder="PASSWORD"
-            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px]"
+            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] outline-none focus:ring-2 focus:ring-blue-600"
             required
+            minLength={8} // Appwrite requires min 8 chars
           />
-          <button className="w-full py-6 bg-slate-900 text-white rounded-2xl text-xs uppercase">
-            Authorize
+
+          <button
+            disabled={loading}
+            className={`w-full py-6 rounded-2xl text-xs uppercase transition-all ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-blue-600"
+            }`}
+          >
+            {loading ? "Authorizing..." : "Authorize"}
           </button>
         </form>
+
         <button
           onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-8 text-[9px] text-slate-400"
+          className="mt-8 text-[9px] text-slate-400 hover:text-blue-600 transition"
         >
-          Switch mode
+          {isSignUp
+            ? "Already have an account? Sign In"
+            : "Need an account? Switch to Register"}
         </button>
       </div>
     </div>
