@@ -7,7 +7,6 @@ const client = new Client()
 export const account = new Account(client);
 export const databases = new Databases(client);
 
-// Is line ko dhyan se check karein, yahi missing thi
 export { ID };
 
 // IDs for easy access
